@@ -39,27 +39,37 @@ fi
 # Check if there are any staged changes to commit
 if ! git diff --cached --quiet; then
   # Ask the user for commit message
-  read -p "Enter commit message: " commit_message
+  read -r -p "Enter commit message: " commit_message
 
-  # Perform a 'git commit' with the provided message
-  git commit -m "$commit_message"
+  # Print the received input
+  echo "Received input: '$commit_message'"
 
-  # Check if the 'git commit' was successful
-  if [ $? -ne 0 ]; then
-    echo "Error: Failed to commit changes." >&2
+  # Prompt the user to confirm the commit message
+  read -r -p "Is the commit message correct? (y/n): " confirm
+  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    # Perform a 'git commit' with the provided message
+    git commit -m "$commit_message"
+
+    # Check if the 'git commit' was successful
+    if [ $? -ne 0 ]; then
+      echo "Error: Failed to commit changes." >&2
+      exit 1
+    fi
+
+    # Perform a 'git push' to push changes to the remote repository
+    git push
+
+    # Check if the 'git push' was successful
+    if [ $? -ne 0 ]; then
+      echo "Error: Failed to push changes to the remote repository." >&2
+      exit 1
+    fi
+
+    echo "Successfully pulled changes, committed with message '$commit_message', and pushed changes."
+  else
+    echo "Commit aborted by user."
     exit 1
   fi
-
-  # Perform a 'git push' to push changes to the remote repository
-  git push
-
-  # Check if the 'git push' was successful
-  if [ $? -ne 0 ]; then
-    echo "Error: Failed to push changes to the remote repository." >&2
-    exit 1
-  fi
-
-  echo "Successfully pulled changes, committed with message '$commit_message', and pushed changes."
 else
   echo "No staged changes to commit. Exiting."
   exit 1
